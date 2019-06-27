@@ -25,7 +25,7 @@
 ```python
 import chatbot
 
-botman = chatbot.Chatbot()
+botman = chatbot.ChatRobot()
 
 @botman.listen('你好')
 def hello():
@@ -73,7 +73,7 @@ context是当前聊天内容上下问，其中msg为本次信息对象，使用�
 
 **配置**
 ```python
-from chatbot import Chatbot
+from chatbot import ChatRobot
 conf = {
     "login_conf": {
         "hotReload": True,
@@ -91,7 +91,7 @@ conf = {
         "level": "DEBUG"
     }
 }
-botman = Chatbot(conf=conf)
+botman = ChatRobot(conf=conf)
 ```
 
 ## 使用chatbot开发的服务

@@ -2,8 +2,6 @@
 
 import sys
 
-sys.path.append('../src')
-
 from chatbot import Chatbot, context
 
 #配置

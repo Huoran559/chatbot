@@ -28,7 +28,7 @@ config = {
 }
 robot = Chatbot(conf=config)
 
-@robot.listen('我要圣诞帽', isOne=True, isGroup=True, isSelf=True, isAt=True)
+@robot.listen('我要圣诞帽', is_one=True, is_group=True, is_self=True, is_at=True)
 def christmas_hat():
     hat_path = 'static/hat.png'
     # 获取用户头像

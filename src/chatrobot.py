@@ -7,18 +7,17 @@ import threading
 import collections
 import re
 
-if sys.version_info.major < 3:
-    reload(sys)
-    sys.setdefaultencoding("utf-8")
 
 context = threading.local()
 context.msg = None
 
 msg = context.msg
 
-class Chatbot():
-    nickName = "chatbot"
+
+class ChatRobot:
+    nick_name = "chatrobot"
     userName = ""
+
     def __init__(self, conf=None):
         """
         init methods.
@@ -30,7 +29,7 @@ class Chatbot():
             login wechat client.it set hotReload as True, so you can login without scan QR image
             agin and agin.
 
-            get your information such as nickName and userName, nick name is different from username
+            get your information such as nick_name and userName, nick name is different from username
             refer from itchat document and itchat support using username to search user information.
 
             initialize logger module.chatbot use python `logging` module to note the important data.
@@ -42,8 +41,8 @@ class Chatbot():
         # store your listen rules
         # you can add new rule by using `listen` methods or `add_listen_rule` method
         self.listen_rule = {
-            "onechat": collections.defaultdict(list), 
-            "groupchat": collections.defaultdict(list), 
+            "onechat": collections.defaultdict(list),
+            "groupchat": collections.defaultdict(list),
             "mechat": collections.defaultdict(list)
         }
 
@@ -52,27 +51,27 @@ class Chatbot():
             login_conf = conf.get('login_conf', {})
         else:
             login_conf = {}
-        hotReload           = login_conf.get('hotReload',           False)
-        statusStorageDir    = login_conf.get('statusStorageDir',    'chatbot.pkl')
-        enableCmdQR         = login_conf.get('enableCmdQR',         False)
-        picDir              = login_conf.get('picDir',              None)
-        qrCallback          = login_conf.get('qrCallback',          None)
-        loginCallback       = login_conf.get('loginCallback',       None)
-        exitCallback        = login_conf.get('exitCallback',        None)
+        hot_reload = login_conf.get('hotReload', False)
+        status_storage_dir = login_conf.get('statusStorageDir', 'chatbot.pkl')
+        enable_cmd_qr = login_conf.get('enableCmdQR', False)
+        pic_dir = login_conf.get('picDir', None)
+        qr_callback = login_conf.get('qr_callback', None)
+        login_callback = login_conf.get('loginCallback', None)
+        exit_callback = login_conf.get('exitCallback', None)
         itchat.auto_login(
-                        hotReload       =   hotReload, 
-                        statusStorageDir=   statusStorageDir,
-                        enableCmdQR     =   enableCmdQR,
-                        picDir          =   picDir,
-                        qrCallback      =   qrCallback,
-                        loginCallback   =   loginCallback,
-                        exitCallback    =   exitCallback)
+            hotReload=hot_reload,
+            statusStorageDir=status_storage_dir,
+            enableCmdQR=enable_cmd_qr,
+            picDir=pic_dir,
+            qrCallback=qr_callback,
+            loginCallback=login_callback,
+            exitCallback=exit_callback)
 
         # initialize self information
         # itchat provide `search_friends` methods to search user information by user name
         # if no user name support it return your own infomation, it is useful so save it.
         me = itchat.search_friends()
-        self.nickName = me['NickName']
+        self.nick_name = me['nick_name']
         self.userName = me['UserName']
 
         # initialize logger module
@@ -83,10 +82,10 @@ class Chatbot():
             logger_conf = conf.get('logger_conf', {})
         else:
             logger_conf = {}
-        level   = logger_conf.get('level',  'DEBUG')
-        format  = logger_conf.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        name    = logger_conf.get('name',   __name__)
-        path    = logger_conf.get('path',   None)
+        level = logger_conf.get('level', 'DEBUG')
+        log_format = logger_conf.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        name = logger_conf.get('name', __name__)
+        path = logger_conf.get('path', None)
 
         if level.upper() == "INFO":
             level = logging.INFO
@@ -99,66 +98,69 @@ class Chatbot():
         else:
             level = logging.DEBUG
 
-        logging.basicConfig(level=level, format=format, filename=path)
+        logging.basicConfig(level=level, format=log_format, filename=path)
         self.logger = logging.getLogger(name)
 
-    def add_listen_rule(self, key_word, handler, isOne=True, isSelf=False, isGroup=False, isAt=False, nickName=None):
+    def add_listen_rule(self, key_word, handler, is_one=True, is_self=False, is_group=False, is_at=False, nick_name=None):
         """
         add_listen_rule
             add a listen rule to chatbot.
         """
         listen_rule = self.listen_rule
-        
+
         rules_box = []
-        if isSelf:
+        if is_self:
             rules_box.append(listen_rule["mechat"])
-        if isGroup:
+        if is_group:
             rules_box.append(listen_rule["groupchat"])
-        if isOne:
+        if is_one:
             rules_box.append(listen_rule["onechat"])
 
         for rules in rules_box:
             rule = {
                 "handler": handler,
                 "handlerName": handler.__name__,
-                "isAt": isAt
+                "is_at": is_at
             }
-            if nickName is not None:
-                rule['nickName'] = nickName
+            if nick_name is not None:
+                rule['nick_name'] = nick_name
             rules[key_word].append(rule)
 
-    def listen(self, key_word, isOne=False, isSelf=False, isGroup=False, isAt=False, nickName=None):
+    def listen(self, key_word, is_one=False, is_self=False, is_group=False, is_at=False, nick_name=None):
         """
         add listen rule by decorator
         """
-        if not isOne and not isSelf and not isGroup:
-            isOne = True
+        if not is_one and not is_self and not is_group:
+            is_one = True
+
         def decorator(f):
-            self.add_listen_rule(key_word, f, isOne, isSelf, isGroup, isAt, nickName)
+            self.add_listen_rule(key_word, f, is_one, is_self, is_group, is_at, nick_name)
             return f
+
         return decorator
 
-    def get_from_username(self, msg, isGroupChat=False):
+    @staticmethod
+    def get_from_username(msg, is_group_chat=False):
         """
-        get msg sender nickname
+        get msg sender nick_name
         """
-        if isGroupChat:
-            return msg['ActualNickName'].encode()
+        if is_group_chat:
+            return msg['Actualnick_name'].encode()
 
-        friend = itchat.search_friends(userName=msg["FromUserName"])
+        friend = itchat.search_friends(userName=msg["from_user_name"])
         if friend is None:
             return "未知"
         else:
-            return friend['NickName']
+            return friend['nick_name']
 
     def get_group_selfname(self, msg):
         """
-        get your nickname in a centain group
+        get your nick_name in a centain group
         """
         if msg.get('User').has_key('Self') and msg['User']['Self']['DisplayName'].encode() != '':
             return msg['User']['Self']['DisplayName'].encode()
         else:
-            return self.nickName
+            return self.nick_name
 
     def _get_rules(self):
         """
@@ -168,22 +170,22 @@ class Chatbot():
         msg = context.msg
 
         text = msg["Text"].encode()
-        if context.isAt:
+        if context.is_at:
             prefix = '@' + self.get_group_selfname(msg) + ' '
             text = text.replace(prefix, '')
         self.logger.debug('关键词: ({})'.format(text))
 
         rules = []
         aim_rules = None
-        if context.fromUserNickName == self.nickName:
+        if context.from_user_nick_name == self.nick_name:
             self.logger.debug('检索个人规则词表')
             aim_rules = self.listen_rule['mechat']
-        elif context.isGroupChat:
+        elif context.is_group_chat:
             self.logger.debug('检索群聊规则词表')
-            aim_rules =  self.listen_rule["groupchat"]
+            aim_rules = self.listen_rule["groupchat"]
         else:
             self.logger.debug('检索私聊规则词表')
-            aim_rules =  self.listen_rule["onechat"]
+            aim_rules = self.listen_rule["onechat"]
 
         for key, value in aim_rules.items():
             key_com = re.compile(key)
@@ -201,10 +203,10 @@ class Chatbot():
         global context
         msg = context.msg
 
-        if not context.isGroupChat:
-            rule['isAt'] = False
+        if not context.is_group_chat:
+            rule['is_at'] = False
 
-        if rule['isAt'] == context.isAt and rule.get('nickName', context.fromUserNickName) == context.fromUserNickName:
+        if rule['is_at'] == context.is_at and rule.get('nick_name', context.from_user_nick_name) == context.from_user_nick_name:
             handler = rule['handler']
             content = handler()
 
@@ -225,27 +227,28 @@ class Chatbot():
                 self.logger.warning("处理函数返回格式错误，错误类型: {}".format(str(type(content))))
         else:
             self.logger.info("处理函数配置项匹配失败")
-            if rule['isAt'] != context.isAt:
+            if rule['is_at'] != context.is_at:
                 self.logger.debug("群聊@属性不匹配")
-                self.logger.debug("{} != {}".format(str(rule['isAt']), str(context.isAt)))
-            if rule.get('nickName', context.fromUserNickName) != context.fromUserNickName:
+                self.logger.debug("{} != {}".format(str(rule['is_at']), str(context.is_at)))
+            if rule.get('nick_name', context.from_user_nick_name) != context.from_user_nick_name:
                 self.logger.debug("对象昵称不匹配")
-                self.logger.debug("{} != {}".format(rule.get('nickName', context.fromUserNickName), context.fromUserNickName))
+                self.logger.debug(
+                    "{} != {}".format(rule.get('nick_name', context.from_user_nick_name), context.from_user_nick_name))
 
-    def _handler_diliver(self, msg, isGroupChat):
+    def _handler_diliver(self, msg, is_group_chat):
         """
         while msg is comming, check it and return
         """
         global context
         context.msg = msg
-        context.isGroupChat = isGroupChat
-        context.isAt = msg.get('isAt', False)
-        context.fromUserNickName = self.get_from_username(msg)
+        context.is_group_chat = is_group_chat
+        context.is_at = msg.get('is_at', False)
+        context.from_user_nick_name = self.get_from_username(msg)
 
         rules = self._get_rules()
 
         self.logger.info("触发规则: {} 条".format(len(rules)))
-        
+
         for rule in rules:
             self._handler_one_rule(rule)
 
@@ -253,24 +256,25 @@ class Chatbot():
         """
         run chatbot
         """
+
         @itchat.msg_register(itchat.content.TEXT)
         def trigger_chatone(msg):
-            fromUserName = self.get_from_username(msg)
+            from_user_name = self.get_from_username(msg)
             text = msg['Text'].encode()
-            self.logger.info('(普通消息){}: {}'.format(fromUserName, text))
-            
+            self.logger.info('(普通消息){}: {}'.format(from_user_name, text))
+
             t = threading.Thread(target=self._handler_diliver, args=(msg, False))
             t.setDaemon(True)
             t.start()
 
-        @itchat.msg_register(itchat.content.TEXT, isGroupChat=True)
+        @itchat.msg_register(itchat.content.TEXT, is_group_chat=True)
         def trigger_chatgroup(msg):
-            fromUserName = self.get_from_username(msg, isGroupChat=True)
+            from_user_name = self.get_from_username(msg, is_group_chat=True)
             text = msg['Text'].encode()
-            self.logger.info('(群消息){}: {}'.format(fromUserName, text))
+            self.logger.info('(群消息){}: {}'.format(from_user_name, text))
 
             t = threading.Thread(target=self._handler_diliver, args=(msg, True))
             t.setDaemon(True)
             t.start()
-        
+
         itchat.run()
