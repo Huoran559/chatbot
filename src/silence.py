@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 
-import sys
-
-from chatbot import Chatbot, context
+from chatrobot import Chatbot, context
 
 #配置
 conf = {
@@ -15,8 +13,8 @@ botman = Chatbot(conf=conf)
 # 返回对方的用户名
 @botman.listen('你好')
 def hello():
-    fromUserName = botman.get_from_username(context.msg)
-    return "你好，{}".format(fromUserName)
+    from_username = botman.get_from_username(context.msg)
+    return "你好，{}".format(from_username)
 
 # 匹配正则
 @botman.listen('大写:[a-zA-Z]*$')

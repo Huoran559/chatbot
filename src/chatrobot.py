@@ -16,7 +16,7 @@ msg = context.msg
 
 class ChatRobot:
     nick_name = "chatrobot"
-    userName = ""
+    user_name = ""
 
     def __init__(self, conf=None):
         """
@@ -29,8 +29,8 @@ class ChatRobot:
             login wechat client.it set hotReload as True, so you can login without scan QR image
             agin and agin.
 
-            get your information such as nick_name and userName, nick name is different from username
-            refer from itchat document and itchat support using username to search user information.
+            get your information such as nick_name and user_name, nick name is different from user_name
+            refer from itchat document and itchat support using user_name to search user information.
 
             initialize logger module.chatbot use python `logging` module to note the important data.
 
@@ -72,7 +72,7 @@ class ChatRobot:
         # if no user name support it return your own infomation, it is useful so save it.
         me = itchat.search_friends()
         self.nick_name = me['nick_name']
-        self.userName = me['UserName']
+        self.user_name = me['user_name']
 
         # initialize logger module
         # it's important to log while the program is running, chatbot use logging module to
@@ -140,14 +140,14 @@ class ChatRobot:
         return decorator
 
     @staticmethod
-    def get_from_username(msg, is_group_chat=False):
+    def get_from_user_name(msg, is_group_chat=False):
         """
         get msg sender nick_name
         """
         if is_group_chat:
             return msg['Actualnick_name'].encode()
 
-        friend = itchat.search_friends(userName=msg["from_user_name"])
+        friend = itchat.search_friends(user_name=msg["from_user_name"])
         if friend is None:
             return "未知"
         else:
@@ -243,7 +243,7 @@ class ChatRobot:
         context.msg = msg
         context.is_group_chat = is_group_chat
         context.is_at = msg.get('is_at', False)
-        context.from_user_nick_name = self.get_from_username(msg)
+        context.from_user_nick_name = self.get_from_user_name(msg)
 
         rules = self._get_rules()
 
@@ -259,7 +259,7 @@ class ChatRobot:
 
         @itchat.msg_register(itchat.content.TEXT)
         def trigger_chatone(msg):
-            from_user_name = self.get_from_username(msg)
+            from_user_name = self.get_from_user_name(msg)
             text = msg['Text'].encode()
             self.logger.info('(普通消息){}: {}'.format(from_user_name, text))
 
@@ -269,7 +269,7 @@ class ChatRobot:
 
         @itchat.msg_register(itchat.content.TEXT, is_group_chat=True)
         def trigger_chatgroup(msg):
-            from_user_name = self.get_from_username(msg, is_group_chat=True)
+            from_user_name = self.get_from_user_name(msg, is_group_chat=True)
             text = msg['Text'].encode()
             self.logger.info('(群消息){}: {}'.format(from_user_name, text))
 
